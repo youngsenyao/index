@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>電子喜帖</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffe5ec;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            background-color: transparent;
+            overflow: hidden;
+            margin-left: 100px; /* 向右移动页面 */
+        }
+        .section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            opacity: 0; /* 初始透明度为0 */
+        }
+        .section img {
+            width: 100%; /* 调整图片宽度 */
+            height: auto;
+        }
+        .section img:nth-of-type(1), /* 顏繪第一张图片 */
+        .section img:nth-of-type(2) { /* 顏繪第二张图片 */
+            margin-left: 20px; /* 向右移动两张顏繪图片 */
+        }
+        .section img:nth-of-type(2) {
+            margin-top: -10px; /* 调整图片顶部间距，让它们更接近 */
+        }
+        .section:nth-child(1) {
+            animation: yanHuiFadeIn 2s forwards; /* 顏繪淡入 */
+        }
+        .section:nth-child(2),
+        .section:nth-child(3) {
+            animation: fadeIn 1.5s forwards 1.5s; /* 其他项淡入，延迟1.5秒 */
+        }
+        .links {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* 靠左对齐 */
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+            padding: 0;
+            gap: 60px; /* 缩小间距 */
+        }
+        .link-item {
+            position: relative;
+            transition: transform 0.3s;
+        }
+        .link-item img {
+            cursor: pointer;
+            height: auto;
+            transition: transform 0.3s;
+        }
+        .link-item.music img,
+        .link-item.item2 img,
+        .link-item.item3 img,
+        .link-item.item4 img {
+            width: 75px;
+        }
+        .link-item.music {
+            animation: float 1.5s ease-in-out infinite;
+        }
+        .link-item.item2 {
+            animation: float 2.1s ease-in-out infinite;
+        }
+        .link-item.item3 {
+            animation: float 2.3s ease-in-out infinite;
+        }
+        .link-item.item4 {
+            animation: float 1.9s ease-in-out infinite;
+        }
+        .link-item img:hover {
+            transform: scale(1.2);
+        }
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+        @keyframes yanHuiFadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .popup-image {
+            max-width: 90%;
+            max-height: 90%;
+            border: 5px solid #fff;
+        }
+        .photo-grid-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+        }
+        .photo-grid-header {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+            max-height: 80vh;
+        }
+        .photo-grid img {
+            width: calc(80% / 3 - 30px); /* 每列最多顯示三張照片 */
+            height: auto;
+            cursor: pointer;
+        }
+        /* 自定义弹窗样式 */
+        .custom-alert {
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 20px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.5);
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1001;
+        }
+        .custom-alert p {
+            margin: 0;
+            padding: 0;
+            font-size: 16px;
+        }
+        .custom-alert button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <img src="https://i.imgur.com/OiCU5At.png" alt="顏繪">
+            <img src="https://i.imgur.com/HPHZHkB.png" alt="新图片"> <!-- 新添加的图片 -->
+        </div>
+        <div class="section">
+            <img src="https://i.imgur.com/CrVfKVu.png" alt="喜帖圖片">
+        </div>
+        <div class="section">
+            <div class="links">
+                <div class="link-item music">
+                    <img id="musicIcon" src="https://i.imgur.com/EqHtJek.png" alt="播放音樂" onclick="toggleMusic()">
+                </div>
+                <div class="link-item item2">
+                    <img src="https://i.imgur.com/YtDpzeL.png" alt="Google Map" onclick="showPopup('https://event.denwell.com/wp-content/uploads/2024/05/%E5%9C%B0%E5%9C%96_%E5%B7%A5%E4%BD%9C%E5%8D%80%E5%9F%9F-1.jpg')">
+                </div>
+                <div class="link-item item3">
+                    <img src="https://i.imgur.com/yVsJ3bS.png" alt="Photos" onclick="showPhotoGrid()">
+                </div>
+                <div class="link-item item4">
+                    <a href="https://example.com/link4" target="_blank">
+                        <img src="https://i.imgur.com/GIXL0R2.png" alt="for you">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="overlay" class="overlay" onclick="hidePopup()">
+        <img id="popupImage" class="popup-image" src="" alt="Popup Image">
+        <div id="photoGridContainer" class="photo-grid-container">
+            <div class="photo-grid-header">我們的美好回憶</div>
+            <div id="photoGrid" class="photo-grid"></div>
+        </div>
+    </div>
+
+    <div id="customAlert" class="custom-alert">
+        <p>恭喜你點超過五次了，觸發神秘小彩蛋</p>
+        <button onclick="closeCustomAlert()">記得截圖換小禮物</button>
+    </div>
+
+    <audio id="audioPlayer" src="https://wlee.neocities.org/Invitation/audio/music.mp3" preload="auto"></audio>
+
+    <script>
+    var clickCount = 0;
+
+    function toggleMusic() {
+        var audio = document.getElementById('audioPlayer');
+        var musicIcon = document.getElementById('musicIcon');
+
+        clickCount++;
+        if (clickCount > 5) {
+            showCustomAlert();
+            clickCount = 0; // 重置计数器
+            return;
+        }
+
+        if (audio.paused) {
+            audio.play();
+            musicIcon.src = "https://i.imgur.com/EqHtJek.png"; // 播放状态的图片
+        } else {
+            audio.pause();
+            musicIcon.src = "https://i.imgur.com/pfAyJaC.png"; // 暂停状态的图片
+        }
+    }
+
+    function showPopup(imageSrc) {
+        var overlay = document.getElementById('overlay');
+        var popupImage = document.getElementById('popupImage');
+        var photoGridContainer = document.getElementById('photoGridContainer');
+        
+        // 隱藏照片網格並顯示圖片
+        photoGridContainer.style.display = 'none';
+        popupImage.src = imageSrc;
+        popupImage.style.display = 'block';
+        overlay.style.display = 'flex';
+    }
+
+    function showPhotoGrid() {
+        var overlay = document.getElementById('overlay');
+        var popupImage = document.getElementById('popupImage');
+        var photoGridContainer = document.getElementById('photoGridContainer');
+        
+        // 隱藏全尺寸圖片，顯示照片網格
+        popupImage.style.display = 'none';
+        photoGridContainer.style.display = 'flex';
+        overlay.style.display = 'flex';
+
+        var photoUrls = [
+            'https://i.imgur.com/N2uqx4Z.jpeg',
+            'https://i.imgur.com/wVnpn9O.jpeg',
+            'https://i.imgur.com/ZDPb50n.jpeg',
+            'https://i.imgur.com/Jl8YdMU.jpeg',
+            'https://i.imgur.com/PEH6cES.jpg',
+            'https://i.imgur.com/NIwupBl.jpg',
+            // 添加更多照片 URL
+        ];
+
+        var photoGrid = document.getElementById('photoGrid');
+        photoGrid.innerHTML = '';
+        for (var i = 0; i < photoUrls.length; i++) {
+            var img = document.createElement('img');
+            img.src = photoUrls[i];
+            img.onclick = function() {
+                showPopup(this.src);
+            };
+            photoGrid.appendChild(img);
+        }
+    }
+
+    function hidePopup() {
+        var overlay = document.getElementById('overlay');
+        overlay.style.display = 'none';
+    }
+
+    function showCustomAlert() {
+        var customAlert = document.getElementById('customAlert');
+        customAlert.style.display = 'block';
+    }
+
+    function closeCustomAlert() {
+        var customAlert = document.getElementById('customAlert');
+        customAlert.style.display = 'none';
+    }
+    </script>
+</body>
+</html>
